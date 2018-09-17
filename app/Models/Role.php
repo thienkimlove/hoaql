@@ -51,10 +51,14 @@ class Role extends EloquentRole
 
     protected function getActionColumnPermissions($role)
     {
-        return [
-            'rolePermissions.index' => '<a class="table-action-btn" href="' . route('rolePermissions.index', $role->id) . '"><i class="fa fa-lock text-warning"></i></a>',
-            'roles.edit' => '<a class="table-action-btn" href="' . route('roles.edit', $role->id) . '"><i class="fa fa-pencil text-success"></i></a>',
-            'roles.destroy' => '<a class="table-action-btn" id="btn-delete-' . $role->id . '" data-url="' . route('roles.destroy', $role->id) . '" href="javascript:;"><i class="fa fa-trash-o text-danger"></i></a>',
-        ];
+        if ($role->name != 'Admin') {
+            return [
+                'rolePermissions.index' => '<a class="table-action-btn" href="' . route('rolePermissions.index', $role->id) . '"><i class="fa fa-lock text-warning"></i></a>',
+                'roles.edit' => '<a class="table-action-btn" href="' . route('roles.edit', $role->id) . '"><i class="fa fa-pencil text-success"></i></a>'
+            ];
+        } else {
+            return [];
+        }
+
     }
 }

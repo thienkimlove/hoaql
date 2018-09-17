@@ -42,11 +42,13 @@ Route::group(['middleware' => 'acl'], function() {
 
     Route::get('settings.dataTables', ['uses' => 'SettingsController@dataTables', 'as' => 'settings.dataTables']);
     Route::resource('settings', 'SettingsController');
+
+    Route::get('customers.dataTables', ['uses' => 'CustomersController@dataTables', 'as' => 'customers.dataTables']);
+    Route::resource('customers', 'CustomersController');
 });
 
 
 #frontend
-
 
 Route::get('/', 'FrontendController@index')->name('frontend.index');
 

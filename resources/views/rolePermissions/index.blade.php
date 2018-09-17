@@ -12,10 +12,14 @@
 @endsection
 
 @section('content')
-    <!-- Page-Title -->
+
     <div class="row">
         <div class="col-sm-12">
-            <h4 class="page-title">Role Permissions</h4>
+            <ol class="breadcrumb">
+                <li class="active">
+                    Danh sách quyền cho Loại thành viên <b>{{$role->name}}</b>
+                </li>
+            </ol>
         </div>
     </div>
 
@@ -23,32 +27,33 @@
         <div class="col-xs-12">
             <div class="panel panel-default panel-border">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Edit User</h3>
+                    <h3 class="panel-title">Danh sách</h3>
                 </div>
                 <div class="panel-body">
                     {!! Form::open(['route' => ['rolePermissions.update', $role->id], 'method' => 'put', 'role' => 'form']) !!}
                     <table class="table table-striped table-bordered table-hover">
                         <thead>
                         <tr>
-                            <th>Tên</th>
-                            <th>Ý nghĩa</th>
-                            <th>Có quyền</th>
+                            <th>Quyền</th>
+                            <th>Có/Không</th>
                         </tr>
                         </thead>
                         <tbody>
-                        @foreach ($permissions as $permission)
+                        @foreach (config('routeMeaning') as $key => $permission)
+
                             <tr>
-                                <td>{{ $permission['name'] }}</td>
-                                <td>{{ isset(config('routeMeaning')[$permission['name']]) ? config('routeMeaning')[$permission['name']] : '' }}</td>
+
+                                <td>{{ $permission }}</td>
                                 <td>
                                     <label>
                                         <input type="checkbox"
-                                               {{ $role->hasAccess($permission['name']) ? ' checked="checked"' : '' }} data-plugin="switchery" data-color="#81c868" name="permissions[{{ $permission['name'] }}]"
+                                               {{ $role->hasAccess($key) ? ' checked="checked"' : '' }} data-plugin="switchery" data-color="#81c868" name="permissions[{{ $key }}]"
                                                value="1">
                                         <span class="lbl"></span>
                                     </label>
                                 </td>
                             </tr>
+
                         @endforeach
                         </tbody>
                     </table>

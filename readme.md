@@ -164,3 +164,26 @@ mysql -uroot -ptieungao -e "CREATE DATABASE hoaql CHARACTER SET utf8mb4 COLLATE 
 ```
 
 ### Run composer `composer install`
+
+### Make the PHPStorm understand paths `php artisan ide-helper:generate`
+
+### Edit hosting `192.168.99.100 ql.vtpcompany.vn`
+
+### Deploy
+
+```textmate
+php artisan migrate
+cp /var/www/html/hoaql/deploy/ql.vtpcompany.vn /etc/nginx/sites-enabled/
+nginx -t
+service nginx restart
+```
+
+
+### Add to Google Console `https://console.developers.google.com/apis/credentials?project=bookstore7-1258`
+
+### Init Roles and Permissions `php artisan db:seed`
+
+Create user `quan.dm@teko.vn` and two roles `Admin` and `User`.
+
+### Add admin `php artisan add:admin --email=test@teko.vn`
+

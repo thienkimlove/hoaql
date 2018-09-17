@@ -12,14 +12,25 @@ class Permission
         $results = [];
 
         foreach (Route::getRoutes() as $route) {
-            $results[] = self::filterRoute($route);
+            $temp = self::filterRoute($route);
+            if ($temp and !in_array($temp, $results)) {
+                $results[] = $temp;
+            }
         }
 
-        $results = Arr::sort($results, function ($value) {
-            return $value['uri'];
-        });
+        return $results;
+    }
 
-        return array_filter($results);
+    public static function getKeyRoute($name)
+    {
+        if (strpos($name, '.') !== FALSE) {
+            $routeKey = explode('.', $name);
+            $meaning = config('routeMeaning');
+            if (in_array($routeKey[0], array_keys($meaning))) {
+                return $routeKey[0];
+            }
+        }
+        return null;
     }
 
     protected static function filterRoute($route)
@@ -28,9 +39,12 @@ class Permission
             return;
         }
 
+        if (!self::getKeyRoute($route->getName())) {
+            return;
+        }
         $result = [
             'uri'    => $route->uri(),
-            'name'   => $route->getName(),
+            'name'   => self::getKeyRoute($route->getName()),
             'action' => $route->getActionName(),
         ];
 
@@ -38,6 +52,6 @@ class Permission
             return;
         }
 
-        return array_merge($result, ['controller' => explode('.', $result['name'])[0]]);
+        return $result['name'];
     }
 }

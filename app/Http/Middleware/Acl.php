@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Permission;
 use Closure;
 use Sentinel;
 
@@ -22,9 +23,15 @@ class Acl
             return redirect()->guest('login');
         }
 
-      /*  if ($request->route()->getName() && !$user->hasAccess($request->route()->getName())) {
-            abort(403);
-        }*/
+        if (!$user->isAdmin()) {
+
+            $routeName = $request->route()->getName();
+            $permissions = Permission::getKeyRoute($routeName);
+            if ($permissions && !$user->hasAccess($permissions)) {
+                flash()->error('Lỗi', 'Không có quyền truy cập mục này!');
+                return redirect()->route('notice');
+            }
+        }
 
         return $next($request);
     }

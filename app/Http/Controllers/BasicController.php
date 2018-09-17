@@ -27,10 +27,17 @@ class BasicController extends Controller
             $googleUser = Socialite::driver('google')->user();
             $user = Sentinel::findByCredentials(['login' => $googleUser->email]);
             if ($user) {
-                Sentinel::login($user, true);
-                session()->put('google_token', $googleUser->token);
-                flash()->success('Thành công', 'Đăng nhập thành công!');
-                return redirect()->intended('/admin');
+                if ($user->status) {
+                    Sentinel::login($user, true);
+                    session()->put('google_token', $googleUser->token);
+                    flash()->success('Thành công', 'Đăng nhập thành công!');
+                    return redirect()->intended('/admin');
+                } else {
+                    @file_get_contents('https://accounts.google.com/o/oauth2/revoke?token='. $googleUser->token);
+                    flash()->error('Lỗi', 'Tài khoản không được kích hoạt!');
+                    return redirect()->route('notice');
+                }
+
             } else {
                 @file_get_contents('https://accounts.google.com/o/oauth2/revoke?token='. $googleUser->token);
                 flash()->error('Lỗi', 'Không có tài khoản tương ứng!');

@@ -1,5 +1,5 @@
 <?php
 
 return array(
-    'posts.approve' => 'Duyệt bài viết',
+    //'posts.approve' => 'Duyệt bài viết',
 );

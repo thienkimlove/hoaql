@@ -16,8 +16,8 @@
                     <i class="md md-input text-success"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">{{ \App\Models\Post::count() }}</b></h3>
-                    <p class="text-muted">Số lượng bài viết</p>
+                    <h3 class="text-dark"><b class="counter">0</b></h3>
+                    <p class="text-muted">Số lượng đơn hàng</p>
                 </div>
                 <div class="clearfix"></div>
             </div>
@@ -29,8 +29,8 @@
                     <i class="md md-import-export text-pink"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">{{ \App\Models\Question::count() }}</b></h3>
-                    <p class="text-muted">Số lượng câu hỏi thường gặp</p>
+                    <h3 class="text-dark"><b class="counter">0</b></h3>
+                    <p class="text-muted">Số lượng đại lý</p>
                 </div>
                 <div class="clearfix"></div>
             </div>
@@ -42,8 +42,8 @@
                     <i class="md md-store text-purple"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">{{ \App\Models\Store::count() }}</b></h3>
-                    <p class="text-muted">Số lượng địa điểm phân phối toàn quốc</p>
+                    <h3 class="text-dark"><b class="counter">0</b></h3>
+                    <p class="text-muted">Số lượng giao vận</p>
                 </div>
                 <div class="clearfix"></div>
             </div>

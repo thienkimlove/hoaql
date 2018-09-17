@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Log;
 use Sentinel;
 use DataTables;
 use Activation;
@@ -83,19 +84,32 @@ class User extends EloquentUser implements
 
                 return $roles;
             })
+
+            ->addColumn('permissions', function ($user) {
+                $permissions = '';
+
+                foreach (config('routeMeaning') as $key=>$permission) {
+                    if ($user->hasAccess($key)) {
+                        $permissions .= '&nbsp;&nbsp;<span style="background-color: #e3e3e3">' . $permission . '</span>';
+                    }
+                }
+
+                return $permissions;
+            })
+
             ->addColumn('action', function ($user) {
-                return '<a class="table-action-btn" href="' . route('userPermissions.index', $user->id) . '" title="Phân quyền theo permission"><i class="fa fa-lock text-warning"></i></a>
-                        <a class="table-action-btn" title="Chỉnh sửa người dùng" href="' . route('users.edit', $user->id) . '"><i class="fa fa-pencil text-success"></i></a>';
+                return '<a class="table-action-btn" title="Chỉnh sửa người dùng" href="' . route('users.edit', $user->id) . '"><i class="fa fa-pencil text-success"></i></a>';
             })
             ->addColumn('avatar', function ($user) {
                 return $user->image ? '<img src="'.url('img/cache/small/'.$user->image).'" />' : '';
             })
-            ->rawColumns(['roles', 'status','desc', 'action', 'email', 'name', 'avatar'])
+            ->rawColumns(['permissions', 'roles', 'status', 'desc', 'action', 'email', 'name', 'avatar'])
             ->make(true);
     }
 
     public function hasAccess($permissions)
     {
+
         if ($this->isAdmin()) {
             return true;
         }
@@ -105,6 +119,7 @@ class User extends EloquentUser implements
 
     public function hasAnyAccess($permissions)
     {
+
         if ($this->isAdmin()) {
             return true;
         }
@@ -112,9 +127,11 @@ class User extends EloquentUser implements
         return parent::hasAnyAccess($permissions);
     }
 
+
+
     public function isAdmin()
     {
-        return Sentinel::inRole('admin');
+        return $this->inRole('admin');
     }
 
     public static function create(array $attributes = [])
@@ -191,28 +208,5 @@ class User extends EloquentUser implements
         $this->roles()->sync($rolesId);
 
         return $this;
-    }
-
-    public function grantPermissions($permissions)
-    {
-        foreach ($permissions as $permission => $value) {
-            $this->grantPermission($permission, $value);
-        }
-
-        $this->save();
-
-        return $this;
-    }
-
-    protected function grantPermission($permission, $value)
-    {
-        return $this->permissionIsInherit($value)
-            ? $this->removePermission($permission)
-            : $this->updatePermission($permission, (bool)$value, true);
-    }
-
-    private function permissionIsInherit($value)
-    {
-        return $value == -1;
     }
 }

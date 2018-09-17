@@ -39,25 +39,9 @@ return [
             'prefix' => '',
         ],
 
-        'hoaql' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'port' => '3306',
-            'database' => 'hoaql',
-            'username' => 'root',
-            'password' => 'tieungao',
-            'unix_socket' => '',
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ],
-
-
         'static' => [
             'driver' => 'mysql',
-            'host' => 'localhost',
+            'host' => '42.112.31.173',
             'port' => '3306',
             'database' => 'static',
             'username' => 'root',

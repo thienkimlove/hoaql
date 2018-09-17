@@ -32,7 +32,7 @@ class FrontendController extends Controller
         $meta['meta_image'] = $this->logo;
         $meta['meta_url'] = url('/');
         
-        return view('frontend.index', compact('page'))->with($meta);
+        return view('welcome', compact('page'))->with($meta);
     }
 
 

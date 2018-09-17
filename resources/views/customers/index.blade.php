@@ -31,11 +31,11 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="btn-group pull-right m-t-15">
-                <a href="/users/create"><button type="button" class="btn btn-default dropdown-toggle waves-effect" >Tạo mới <span class="m-l-5"><i class="fa fa-plus"></i></span></button></a>
+                <a href="/customers/create"><button type="button" class="btn btn-default dropdown-toggle waves-effect" >Tạo mới <span class="m-l-5"><i class="fa fa-plus"></i></span></button></a>
             </div>
             <ol class="breadcrumb">
                 <li class="active">
-                    Danh sách User
+                    Danh sách đại lý
                 </li>
             </ol>
         </div>
@@ -47,21 +47,15 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <form class="form-inline" role="form" id="search-form">
+
                             <div class="form-group m-l-10">
-                                <label class="sr-only" for="">User name</label>
-                                <input type="text" class="form-control" placeholder="Tên người dùng" name="name"/>
+                                <label class="sr-only" for="">Tên</label>
+                                <input type="text" class="form-control" placeholder="Tên" name="name"/>
                             </div>
-                            <div class="form-group m-l-10">
-                                <label class="sr-only" for="">Email</label>
-                                <input type="text" class="form-control" placeholder="Email" name="email"/>
-                            </div>
-                            <div class="form-group m-l-10">
-                                <label class="sr-only" for="">Phân quyền</label>
-                                {!! Form::select('role_id', ['' => '--- Chọn quyền ---'] + \App\Lib\Helpers::roleList(), null, ['class' => 'form-control select2']) !!}
-                            </div>
+
                             <div class="form-group m-l-10">
                                 <label class="sr-only" for="">Trạng thái</label>
-                                {!! Form::select('status', ['' => '--- Chọn trạng thái ---'] + config('system.user_status'), null, ['class' => 'form-control']) !!}
+                                {!! Form::select('status', ['' => '--- Chọn trạng thái ---'] + config('system.user_status'), 1, ['class' => 'form-control']) !!}
                             </div>
                             <button type="submit" class="btn btn-success waves-effect waves-light m-l-15">Tìm kiếm</button>
                         </form>
@@ -74,16 +68,18 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="card-box table-responsive">
-                <h4 class="m-t-0 header-title"><b>Danh sách người dùng trên hệ thống</b></h4>
+                <h4 class="m-t-0 header-title"><b>Danh sách đại lý</b></h4>
                 <p class="text-muted font-13 m-b-30"></p>
-                <table id="dataTables-users" class="table table-striped table-bordered table-actions-bar">
+                <table id="dataTables-contents" class="table table-striped table-bordered table-actions-bar">
                     <thead>
                     <tr>
-                        <th>Tên người dùng</th>
-                        <th>Email</th>
-                        <th>Loại</th>
-                        <th>Các Quyền</th>
+                        <th>Tên đại lý</th>
+                        <th>Số ĐT</th>
+                        <th>Địa chỉ</th>
+                        <th>Quận Huyện</th>
+                        <th>Trực thuộc</th>
                         <th>Trạng thái</th>
+                        <th>Lịch sử</th>
                         <th>Ngày tạo</th>
                         <th></th>
                     </tr>
@@ -127,26 +123,25 @@
         $('.select2').select2();
 
         $(function () {
-            var dataTable = $("#dataTables-users").DataTable({
+            var dataTable = $("#dataTables-contents").DataTable({
                 searching: false,
                 serverSide: true,
                 processing: true,
                 ajax: {
-                    url: '{!! route('users.dataTables') !!}',
+                    url: '{!! route('customers.dataTables') !!}',
                     data: function (d) {
                         d.name = $('input[name=name]').val();
-                        d.email = $('input[name=email]').val();
-                        d.role_id = $('select[name=role_id]').val();
-                        d.store_id = $('select[name=store_id]').val();
                         d.status = $('select[name=status]').val();
                     }
                 },
                 columns: [
                     {data: 'name', name: 'name'},
-                    {data: 'email', name: 'email'},
-                    {data: 'roles', name: 'roles'},
-                    {data: 'permissions', name: 'permissions'},
+                    {data: 'phone', name: 'phone'},
+                    {data: 'address', name: 'address'},
+                    {data: 'district_name', name: 'district_name'},
+                    {data: 'parent_name', name: 'parent_name'},
                     {data: 'status', name: 'status'},
+                    {data: 'histories', name: 'histories'},
                     {data: 'created_at', name: 'created_at'},
                     {data: 'action', name: 'action'}
                 ],
@@ -157,6 +152,7 @@
                 dataTable.draw();
                 e.preventDefault();
             });
+
         });
 
         $.ajaxSetup({

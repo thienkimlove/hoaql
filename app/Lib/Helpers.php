@@ -2,12 +2,32 @@
 
 namespace App\Lib;
 
+use App\Models\Customer;
+use App\Models\District;
 use App\Models\Module;
 use App\Models\Role;
 use Carbon\Carbon;
+use Log;
 
 
 class Helpers {
+
+    public static function getDistrictFromAddress($address)
+    {
+         $districts = District::all();
+         $utf8_address = mb_strtolower($address, 'UTF-8');
+         foreach ($districts as $district) {
+             $utf8_district = mb_strtolower($district->name, 'UTF-8');
+             //Log::info($utf8_address.'|'.$utf8_district);
+             if (strpos($utf8_address, $utf8_district) !== FALSE) {
+                 return $district->id;
+             }
+         }
+
+         return null;
+
+
+    }
 
     public static function getModuleValues($content, $type)
     {
@@ -26,6 +46,17 @@ class Helpers {
     public static function roleList()
     {
        return Role::pluck('name', 'id')->all();
+    }
+
+    public static function customerList($id = null)
+    {
+        if ($id) {
+            Log::info($id);
+            return Customer::where('status', true)->where('id', '!=', $id)->pluck('name', 'id')->all();
+        } else {
+            return Customer::where('status', true)->pluck('name', 'id')->all();
+        }
+
     }
 
 
