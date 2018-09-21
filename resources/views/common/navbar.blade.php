@@ -21,17 +21,7 @@
 
                 @endif
 
-                @if ($currentUser->hasAccess(['rules']))
-
-                    <li class="has-submenu">
-
-                        <a href="{{ url('/rules')}}"><i class="md md-shopping-cart"></i>Cơ chế</a>
-
-                    </li>
-
-                @endif
-
-                @if ($currentUser->hasAccess(['orders']))
+                @if ($currentUser->hasAnyAccess(['orders', 'transports']))
 
                     <li class="has-submenu">
 
@@ -48,6 +38,8 @@
                         <ul class="submenu">
                             <li><a href="{{ url('/users')}}">Thành viên</a></li>
                             <li><a href="{{ url('/roles') }}">Loại thành viên</a></li>
+                            <li><a href="{{ url('/payments') }}">Phương thức thanh toán</a></li>
+                            <li><a href="{{ url('/rules')}}">Cơ chế</a></li>
 
                         </ul>
                     </li>

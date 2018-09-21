@@ -45,6 +45,28 @@ Route::group(['middleware' => 'acl'], function() {
 
     Route::get('customers.dataTables', ['uses' => 'CustomersController@dataTables', 'as' => 'customers.dataTables']);
     Route::resource('customers', 'CustomersController');
+
+    Route::get('rules.dataTables', ['uses' => 'RulesController@dataTables', 'as' => 'rules.dataTables']);
+    Route::resource('rules', 'RulesController');
+
+    Route::get('payments.dataTables', ['uses' => 'PaymentsController@dataTables', 'as' => 'payments.dataTables']);
+    Route::resource('payments', 'PaymentsController');
+
+
+    Route::get('orders.dataTables', ['uses' => 'OrdersController@dataTables', 'as' => 'orders.dataTables']);
+
+    Route::get('orders.delivery/{id}', ['uses' => 'OrdersController@delivery', 'as' => 'orders.delivery']);
+
+    Route::get('orders.complete/{id}', ['uses' => 'OrdersController@complete', 'as' => 'orders.complete']);
+
+    Route::get('orders.return/{id}', ['uses' => 'OrdersController@return', 'as' => 'orders.return']);
+
+    Route::get('orders.cancel/{id}', ['uses' => 'OrdersController@cancel', 'as' => 'orders.cancel']);
+
+    Route::get('orders/export', 'OrdersController@export')->name('orders.export');
+
+    Route::resource('orders', 'OrdersController');
+
 });
 
 

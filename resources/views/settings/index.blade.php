@@ -70,9 +70,9 @@
                 <table id="dataTables-settings" class="table table-striped table-bordered table-actions-bar">
                     <thead>
                     <tr>
-                        <th width="35%">Tên</th>
-                        <th width="50%">Giá trị</th>
-                        <th width="15%"></th>
+                        <th>Tên</th>
+                        <th>Giá trị</th>
+                        <th>Thao tác</th>
                     </tr>
                     </thead>
                 </table>

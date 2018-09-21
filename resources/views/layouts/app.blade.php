@@ -82,7 +82,7 @@ $.ajaxSetup({
 
 </script>
 @yield('inline_scripts', '')
-
+@include('vendor.flash.swal')
 @include('flash-message::sweetalert')
 
 </body>

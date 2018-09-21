@@ -39,7 +39,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Slug</th>
-                                <th></th>
+                                <th>Thao tác</th>
                             </tr>
                             </thead>
                         </table>

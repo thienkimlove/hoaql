@@ -6,10 +6,13 @@
          0 => 'Không kích hoạt'
      ],
 
-     'customer_content_status' => [
-         0 => 'Vừa tiếp nhận',
-         1 => 'Đang xử lý',
-         2 => 'Đã hoàn thành'
+     'order_status' => [
+         'create' => 'Mới tạo',
+         'package' => 'Đang chuyển',
+         'delivery' => 'Đã chuyển',
+         'complete' => 'Hoàn thành',
+         'return' => 'Hoàn đơn',
+         'cancel' => 'Hủy'
      ],
 
      'comment_content_status' => [

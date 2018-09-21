@@ -51,6 +51,6 @@ class CustomersController extends Controller
 
     public function dataTables(Request $request)
     {
-        return Customer::getDatatables($request);
+        return Customer::getDataTables($request);
     }
 }

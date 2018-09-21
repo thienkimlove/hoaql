@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Lib\Helpers;
+use App\Models\Customer;
+use App\Models\Rule;
+use Illuminate\Http\Request;
 use Log;
 use Sentinel;
 use Exception;
@@ -70,12 +74,41 @@ class BasicController extends Controller
 
     /**
      * Using for admin ajax if needed
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function ajax()
+    public function ajax(Request $request)
     {
-        $status = false;
-        return response()->json(['status' => $status]);
+        if ($request->filled('part')) {
+            $part = $request->input('part');
+            if ($part == 'fill_customer' && $request->filled('customer_id')) {
+                $customer_id = $request->input('customer_id');
+                $customer = Customer::find($customer_id);
+                if ($customer) {
+                    return response()->json($customer->toArray());
+                }
+            }
+
+            if ($part == 'fill_rule' && $request->filled('rule_id')) {
+                $rule_id = $request->input('rule_id');
+                $rule = Rule::find($rule_id);
+                if ($rule) {
+                    $ars = $rule->toArray();
+                    $responseArs = [];
+                    foreach ($ars as $k => $val) {
+                        if (in_array($k, ['salary', 'award', 'price', 'quantity'])) {
+                            $responseArs[$k] = Helpers::intToDotString($val);
+                        }  else {
+                            $responseArs[$k] = $val;
+                        }
+                    }
+                    $responseArs['total'] = Helpers::intToDotString($ars['quantity']*$ars['price']);
+                    return response()->json($responseArs);
+                }
+            }
+
+        }
+        return response()->json([]);
     }
 
 }

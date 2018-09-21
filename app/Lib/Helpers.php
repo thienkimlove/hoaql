@@ -5,12 +5,34 @@ namespace App\Lib;
 use App\Models\Customer;
 use App\Models\District;
 use App\Models\Module;
+use App\Models\Payment;
 use App\Models\Role;
+use App\Models\Rule;
 use Carbon\Carbon;
 use Log;
 
 
 class Helpers {
+
+    public static function convertStringToInt($value)
+    {
+        return intval(str_replace('.', '', $value));
+    }
+
+    public static function intToDotString($value) {
+        $symbol_thousand = '.';
+        $decimal_place = 0;
+        $price = number_format($value, $decimal_place, '', $symbol_thousand);
+        return $price;
+    }
+
+    public static function vn_price($priceFloat, $number=false) {
+        $symbol = ($number) ?  '' : 'đ';
+        $symbol_thousand = '.';
+        $decimal_place = 0;
+        $price = number_format($priceFloat, $decimal_place, '', $symbol_thousand);
+        return $price.$symbol;
+    }
 
     public static function getDistrictFromAddress($address)
     {
@@ -46,6 +68,15 @@ class Helpers {
     public static function roleList()
     {
        return Role::pluck('name', 'id')->all();
+    }
+
+    public static function paymentList()
+    {
+        return Payment::where('status', true)->pluck('name', 'id')->all();
+    }
+    public static function ruleList()
+    {
+        return Rule::where('status', true)->pluck('name', 'id')->all();
     }
 
     public static function customerList($id = null)

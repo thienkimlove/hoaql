@@ -85,7 +85,7 @@
                         <th>Các Quyền</th>
                         <th>Trạng thái</th>
                         <th>Ngày tạo</th>
-                        <th></th>
+                        <th>Thao tác</th>
                     </tr>
                     </thead>
                 </table>

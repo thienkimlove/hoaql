@@ -52,22 +52,6 @@ class Customer extends \Eloquent
 
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            $model->setCode();
-        });
-    }
-
-    public function setCode()
-    {
-        $this->code = 'CUS-'.$this->id;
-        return $this;
-    }
-
-
     public static function getDataTables($request)
     {
 
@@ -102,11 +86,11 @@ class Customer extends \Eloquent
             ->addColumn('district_name', function ($customer) {
                 return $customer->district ? $customer->district->name.' - '. $customer->district->province->name : '';
             })
-            ->addColumn('histories', function ($post) {
+            ->addColumn('histories', function ($customer) {
                 $histories = '';
 
                 $logs = Event::where('content', 'customers')
-                    ->where('content_id', $post->id)
+                    ->where('content_id', $customer->id)
                     ->latest('created_at')
                     ->limit(3)
                     ->get();
