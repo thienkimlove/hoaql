@@ -83,6 +83,9 @@ class Customer extends \Eloquent
             ->addColumn('parent_name', function ($customer) {
                 return $customer->parent_id ? $customer->parent->name : '';
             })
+            ->editColumn('name', function($customer){
+                return $customer->name.' (Mã:'.$customer->code.')';
+            })
             ->addColumn('district_name', function ($customer) {
                 return $customer->district ? $customer->district->name.' - '. $customer->district->province->name : '';
             })

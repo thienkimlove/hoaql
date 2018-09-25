@@ -30,9 +30,12 @@
 @section('content')
     <div class="row">
         <div class="col-sm-12">
-            <div class="btn-group pull-right m-t-15">
-                <a href="/orders/create"><button type="button" class="btn btn-default dropdown-toggle waves-effect" >Tạo mới <span class="m-l-5"><i class="fa fa-plus"></i></span></button></a>
-            </div>
+            @if (Sentinel::getUser()->hasAccess('orders'))
+                <div class="btn-group pull-right m-t-15">
+                    <a href="/orders/create"><button type="button" class="btn btn-default dropdown-toggle waves-effect" >Tạo mới <span class="m-l-5"><i class="fa fa-plus"></i></span></button></a>
+                </div>
+            @endif
+
             <ol class="breadcrumb">
                 <li class="active">
                     Danh sách đơn hàng
@@ -54,9 +57,34 @@
                             </div>
 
                             <div class="form-group m-l-10">
+                                <label class="sr-only" for="">Mã Đại lý</label>
+                                <input type="text" class="form-control" placeholder="Mã Đại lý" name="customer_code"/>
+                            </div>
+
+                            <div class="form-group m-l-10">
                                 <label class="sr-only" for="">Trạng thái</label>
                                 {!! Form::select('status', ['' => '--- Chọn trạng thái ---'] + config('system.order_status'), '', ['class' => 'form-control']) !!}
                             </div>
+
+                            <div class="form-group m-l-10">
+                                <label class="sr-only" for="">Theo ngày</label>
+                                <input class="form-control input-daterange-datepicker" type="text" name="date" value="{{ \Carbon\Carbon::today()->format('d/m/Y') }} - {{ \Carbon\Carbon::today()->format('d/m/Y') }}" placeholder="Theo ngày" style="width: 200px;"/>
+                            </div>
+
+                            <hr/>
+
+                            <div class="form-group m-l-10">
+                                <label class="sr-only" for="">Mã Vận Chuyển</label>
+                                <input type="text" class="form-control" placeholder="Mã Vận Chuyển" name="vc_code"/>
+                            </div>
+
+                            <div class="form-group m-l-10">
+                                <label class="sr-only" for="">Đơn vị Vận Chuyển</label>
+                                <input type="text" class="form-control" placeholder="Đơn vị Vận Chuyển" name="vc_name"/>
+                            </div>
+
+
+
                             <button type="submit" class="btn btn-success waves-effect waves-light m-l-15">Tìm kiếm</button>
                         </form>
 
@@ -65,6 +93,10 @@
 
                             {{Form::hidden('filter_code', null)}}
                             {{Form::hidden('filter_status', null)}}
+                            {{Form::hidden('filter_date', null)}}
+                            {{Form::hidden('filter_customer_code', null)}}
+                            {{Form::hidden('filter_vc_code', null)}}
+                            {{Form::hidden('filter_vc_name', null)}}
 
                             <button class="btn btn-danger waves-effect waves-light m-t-15" value="export" type="submit" name="export">
                                 <i class="fa fa-download"></i>&nbsp; Xuất Excel
@@ -134,9 +166,11 @@
 
 @section('inline_scripts')
     <script type="text/javascript">
-        $('.select2').select2();
+
 
         $(function () {
+            $('.select2').select2();
+
             let dataTable = $("#dataTables-contents").DataTable({
                 searching: false,
                 serverSide: true,
@@ -144,13 +178,17 @@
                 ajax: {
                     url: '{!! route('orders.dataTables') !!}',
                     data: function (d) {
-                        d.name = $('input[name=code]').val();
+                        d.code = $('input[name=code]').val();
+                        d.date = $('input[name=date]').val();
+                        d.customer_code = $('input[name=customer_code]').val();
+                        d.vc_name = $('input[name=vc_name]').val();
+                        d.vc_code = $('input[name=vc_code]').val();
                         d.status = $('select[name=status]').val();
                     }
                 },
                 columns: [
                     {data: 'code', name: 'code'},
-                    {data: 'customer', name: 'customer'},
+                    {data: 'customer_info', name: 'customer_info'},
                     {data: 'order', name: 'order'},
                     {data: 'total', name: 'total'},
                     {data: 'transport', name: 'transport'},
@@ -251,6 +289,33 @@
                 });
             });
 
+            dataTable.on('click', '[id^="btn-move-"]', function (e) {
+                e.preventDefault();
+
+                let url = $(this).data('url');
+
+                swal({
+                    title: "Bạn có muốn chuyển đơn sang bộ phận vận chuyển?",
+                    text: "",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Chuyển sang vận chuyển!"
+                }).then(function () {
+                    $.ajax({
+                        url : url,
+                        type : 'GET',
+                        beforeSend: function (xhr) {
+                            var token = $('meta[name="csrf_token"]').attr('content');
+                            if (token) {
+                                return xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                            }
+                        }
+                    }).always(function (data) {
+                        dataTable.draw();
+                    });
+                });
+            });
 
 
             dataTable.on('click', '[id^="btn-complete-"]', function (e) {
@@ -281,8 +346,54 @@
                 });
             });
 
+            $('.input-daterange-datepicker').daterangepicker({
+                autoUpdateInput: false,
+                showDropdowns: true,
+                showWeekNumbers: true,
+                timePicker: false,
+                timePickerIncrement: 1,
+                timePicker12Hour: true,
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                },
+                opens: 'left',
+                drops: 'down',
+                buttonClasses: ['btn', 'btn-sm'],
+                applyClass: 'btn-default',
+                cancelClass: 'btn-white',
+                separator: ' to ',
+                locale: {
+                    format: 'DD/MM/YYYY',
+                    applyLabel: 'Submit',
+                    cancelLabel: 'Clear',
+                    fromLabel: 'From',
+                    toLabel: 'To',
+                    customRangeLabel: 'Custom',
+                    daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+                    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+                    firstDay: 1
+                }
+            });
+
+            $('.input-daterange-datepicker').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+
+            $('.input-daterange-datepicker').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+            });
+
             $('#export-form').on('submit', function (e) {
                 $('input[name=filter_code]').val($('input[name=code]').val());
+                $('input[name=filter_date]').val($('input[name=date]').val());
+                $('input[name=filter_customer_code]').val($('input[name=customer_code]').val());
+                $('input[name=filter_vc_code]').val($('input[name=vc_code]').val());
+                $('input[name=filter_vc_name]').val($('input[name=vc_name]').val());
 
                 $('input[name=filter_status]').val($('select[name=status]').val());
 

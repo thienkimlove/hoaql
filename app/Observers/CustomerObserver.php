@@ -14,7 +14,7 @@ class CustomerObserver
      */
     public function created(Customer $customer)
     {
-        $customer->code = 'CUS-'.$customer->id;
+        $customer->code = 'C'.$customer->id;
         //$customer->slug = str_slug($customer->name);
         $customer->save();
     }

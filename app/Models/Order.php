@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Lib\Helpers;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,6 +38,9 @@ class Order extends Model
         'vc_phone',
         'vc_code',
         'status',
+        'small_bag_qty',
+        'carton_box_qty',
+        'holo_term_qty',
     ];
 
     public function isCreate()
@@ -71,13 +75,9 @@ class Order extends Model
 
     public function canComplete()
     {
-        return ($this->isPackage() || $this->isDelivery());
+        return  $this->isDelivery();
     }
 
-    public function canDelivery()
-    {
-        return $this->isPackage();
-    }
 
     public function canCancel()
     {
@@ -96,7 +96,7 @@ class Order extends Model
 
     public function canEditTransportInfo()
     {
-        return ($this->isCreate() || $this->isPackage());
+        return $this->isPackage();
     }
 
 
@@ -121,6 +121,21 @@ class Order extends Model
         return $this->belongsTo(Rule::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function details()
+    {
+        return $this->hasMany(Detail::class);
+    }
+
 
     public static function getDataTables($request)
     {
@@ -138,22 +153,52 @@ class Order extends Model
                 if ($request->filled('status')) {
                     $query->where('status', $request->get('status'));
                 }
+
+                if ($request->filled('date')) {
+                    $dateRange = explode('-', $request->get('date'));
+                    $query->whereDate('created_at', '>=', Carbon::createFromFormat('d/m/Y', trim($dateRange[0]))->toDateString());
+                    $query->whereDate('created_at', '<=', Carbon::createFromFormat('d/m/Y', trim($dateRange[1]))->toDateString());
+                }
+
+                if ($request->filled('vc_code')) {
+                    $query->where('vc_code', $request->get('vc_code'));
+                }
+
+                if ($request->filled('vc_name')) {
+                    $query->where('vc_name', $request->get('vc_name'));
+                }
+
+                if ($request->filled('customer_code')) {
+                    $customer_code = $request->get('customer_code');
+                    $query->whereHas('customer', function($q) use ($customer_code){
+                        $q->where('code', $customer_code);
+                    });
+                }
+
             })
             ->addColumn('action', function ($content) use ($user) {
 
                 $response = null;
 
-                if (($content->canEditSaleInfo() && $user->hasAccess(['orders'])) || ($content->canEditTransportInfo() && $user->hasAccess(['transports']))) {
-                    $response .= '<a class="table-action-btn" title="Cập nhật đơn" href="' . route('orders.edit', $content->id) . '"><i class="fa fa-pencil text-success"></i></a>';
+                if (($content->canEditSaleInfo() && $user->hasAccess(['orders']))) {
+                    $response .= '<a class="table-action-btn" title="Cập nhật thông tin đơn hàng" href="' . route('orders.edit', $content->id) . '"><i class="fa fa-pencil text-success"></i></a>';
+
+                    $response .= '<a class="table-action-btn" id="btn-move-' . $content->id . '" title="Chuyển cho nhân viên vận chuyển" data-url="' . route('orders.move', $content->id) . '" href="javascript:;"><i class="fa fa-paste text-warning"></i></a>';
                 }
+
+
+                if ($content->canEditTransportInfo() && $user->hasAccess(['transports'])) {
+                     $response .= '<a class="table-action-btn" title="Cập nhật thông tin vận chuyển" href="' . route('orders.edit', $content->id) . '"><i class="fa fa-pencil text-success"></i></a>';
+
+                     if ($content->vc_user_id && $content->vc_name) {
+                         $response .= '<a class="table-action-btn" id="btn-delivery-' . $content->id . '" title="Đánh dấu đơn đã chuyển" data-url="' . route('orders.delivery', $content->id) . '" href="javascript:;"><i class="fa fa-subway text-warning"></i></a>';
+                     }
+                 }
 
                 if ($content->canComplete() && $user->hasAccess(['orders'])) {
                     $response .= '<a class="table-action-btn" id="btn-complete-' . $content->id . '" title="Hoàn thành đơn" data-url="' . route('orders.complete', $content->id) . '" href="javascript:;"><i class="fa fa-check text-success"></i></a>';
                 }
 
-                if ($content->canDelivery() && $user->hasAccess(['transports'])) {
-                    $response .= '<a class="table-action-btn" id="btn-delivery-' . $content->id . '" title="Đánh dấu đơn đã chuyển" data-url="' . route('orders.delivery', $content->id) . '" href="javascript:;"><i class="fa fa-subway text-warning"></i></a>';
-                }
 
                 if ($content->canCancel() && $user->hasAccess(['orders'])) {
                     $response .= '<a class="table-action-btn" id="btn-cancel-' . $content->id . '" title="Hủy đơn" data-url="' . route('orders.cancel', $content->id) . '" href="javascript:;"><i class="fa fa-remove text-danger"></i></a>';
@@ -166,12 +211,12 @@ class Order extends Model
                 return $response;
 
             })
-            ->addColumn('customer', function($content){
-                return '<p><b>Tên : </b>'.$content->customer_name.'<br/><b>SDT : </b>'.$content->customer_phone.'<br/><b>Địa chỉ : </b>'.$content->customer_address.'<br/></p>';
+            ->addColumn('customer_info', function($content){
+                return '<p><b>Tên : </b>'.$content->customer_name.' (Mã:'.$content->customer->code.')'.'<br/><b>SDT : </b>'.$content->customer_phone.'<br/><b>Địa chỉ : </b>'.$content->customer_address.'<br/></p>';
             })
 
             ->addColumn('order', function($content){
-                return '<p><b>Số lượng : </b>'.Helpers::vn_price($content->quantity, true).'<br/><b>Đơn giá : </b>'.Helpers::vn_price($content->price).'<br/><b>Lương : </b>'.Helpers::vn_price($content->salary).'<br/><b>Thưởng : </b>'.Helpers::vn_price($content->award).'<br/><b>Số túi : </b>'.Helpers::vn_price($content->bag_qty, true).'<br/><b>Số hộp : </b>'.Helpers::vn_price($content->box_qty, true).'<br/><b>Khuyến mãi : </b>'.Helpers::vn_price($content->gift, true).'<br/></p>';
+                return '<p><b>Số lượng : </b>'.Helpers::vn_price($content->quantity, true).'<br/><b>Đơn giá : </b>'.Helpers::vn_price($content->price).'<br/><b>Số túi : </b>'.Helpers::vn_price($content->bag_qty, true).'<br/><b>Số hộp : </b>'.Helpers::vn_price($content->box_qty, true).'<br/><b>Số túi nilon : </b>'.Helpers::vn_price($content->small_bag_qty, true).'<br/><b>Số thùng carton : </b>'.Helpers::vn_price($content->carton_box_qty, true).'<br/><b>Số tem holo : </b>'.Helpers::vn_price($content->holo_term_qty, true).'<br/><b>Khuyến mãi : </b>'.Helpers::vn_price($content->gift, true).'<br/><b>Lương : </b>'.Helpers::vn_price($content->salary).'<br/><b>Thưởng : </b>'.Helpers::vn_price($content->award).'<br/></p>';
             })
 
             ->addColumn('transport', function($content){
@@ -207,7 +252,7 @@ class Order extends Model
             ->editColumn('status', function ($content) {
                 return config('system.order_status.'.$content->status);
             })
-            ->rawColumns(['action', 'status', 'histories', 'customer', 'order', 'transport'])
+            ->rawColumns(['action', 'status', 'histories', 'customer_info', 'order', 'transport'])
             ->make(true);
     }
 
@@ -231,6 +276,27 @@ class Order extends Model
             $query->where('status', $request->get('filter_status'));
         }
 
+        if ($request->filled('filter_date')) {
+            $dateRange = explode('-', $request->get('filter_date'));
+            $query->whereDate('created_at', '>=', Carbon::createFromFormat('d/m/Y', trim($dateRange[0]))->toDateString());
+            $query->whereDate('created_at', '<=', Carbon::createFromFormat('d/m/Y', trim($dateRange[1]))->toDateString());
+        }
+
+        if ($request->filled('filter_vc_code')) {
+            $query->where('vc_code', $request->get('filter_vc_code'));
+        }
+
+        if ($request->filled('filter_vc_name')) {
+            $query->where('vc_name', $request->get('filter_vc_name'));
+        }
+
+        if ($request->filled('filter_customer_code')) {
+            $customer_code = $request->get('filter_customer_code');
+            $query->whereHas('customer', function($q) use ($customer_code){
+                $q->whereIn('code', $customer_code);
+            });
+        }
+
         $reports = $query->get();
 
         return (new static())->createExcelFile($reports);
@@ -243,26 +309,34 @@ class Order extends Model
 
         $row = 2;
         foreach ($reports as $report) {
+
+            $tructhuoc = isset($report->customer->parent)? ' - Trực thuộc : '.$report->customer->parent->name : '';
+
             $objPHPExcel->getActiveSheet()->setCellValue('A'.$row, $row - 1)
-                ->setCellValue('B'.$row, $report->code)
-                ->setCellValue('C'.$row, $report->customer_name)
-                ->setCellValue('D'.$row, $report->customer_phone)
-                ->setCellValue('E'.$row, $report->customer_address)
-                ->setCellValue('F'.$row, Helpers::intToDotString($report->quantity))
-                ->setCellValue('G'.$row, Helpers::vn_price($report->salary))
-                ->setCellValue('H'.$row, Helpers::vn_price($report->salary))
-                ->setCellValue('I'.$row, Helpers::vn_price($report->award))
-                ->setCellValue('J'.$row, Helpers::intToDotString($report->bag_qty))
-                ->setCellValue('K'.$row, Helpers::intToDotString($report->box_qty))
-                ->setCellValue('L'.$row, $report->created_at->format('d/m/Y'))
-                ->setCellValue('M'.$row, $report->sale_user->name)
-                ->setCellValue('N'.$row, Helpers::vn_price($report->total))
-                ->setCellValue('O'.$row, Helpers::vn_price($report->phi_vc_thu_ho))
-                ->setCellValue('P'.$row, Helpers::vn_price($report->phi_vc_cty_tra))
-                ->setCellValue('Q'.$row, Helpers::vn_price($report->tien_phai_thu))
-                ->setCellValue('R'.$row, $report->vc_name)
-                ->setCellValue('S'.$row, $report->vc_phone)
-                ->setCellValue('T'.$row, $report->vc_code)
+                ->setCellValue('B'.$row, $report->created_at->format('d/m/Y'))
+                ->setCellValue('C'.$row, $report->code)
+                ->setCellValue('D'.$row, $report->customer_name.' (Mã : '.$report->customer->code.') - '.$report->customer_phone.' - '.$report->customer_address. $tructhuoc)
+                ->setCellValue('E'.$row, number_format($report->quantity))
+
+                ->setCellValue('F'.$row, number_format($report->box_qty))
+                ->setCellValue('G'.$row, number_format($report->bag_qty))
+                ->setCellValue('H'.$row, number_format($report->small_bag_qty))
+
+                ->setCellValue('I'.$row, number_format($report->carton_box_qty))
+                ->setCellValue('J'.$row, number_format($report->holo_term_qty))
+                ->setCellValue('K'.$row, number_format($report->gift))
+
+                ->setCellValue('L'.$row, number_format($report->price))
+                ->setCellValue('M'.$row, number_format($report->total))
+                ->setCellValue('N'.$row, $report->sale_user->name)
+
+                ->setCellValue('O'.$row, number_format($report->phi_vc_thu_ho))
+                ->setCellValue('P'.$row, number_format($report->phi_vc_cty_tra))
+                ->setCellValue('Q'.$row, number_format($report->tien_phai_thu))
+
+                ->setCellValue('R'.$row, number_format($report->salary))
+                ->setCellValue('S'.$row, number_format($report->award))
+                ->setCellValue('T'.$row, $report->vc_name.' | '.$report->vc_phone.' | '.$report->vc_code)
                 ->setCellValue('U'.$row, isset($report->vc_user)? $report->vc_user->name : '')
                 ->setCellValue('V'.$row, config('system.order_status.'.$report->status));
 

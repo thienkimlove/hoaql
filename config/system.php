@@ -20,4 +20,9 @@
          1 => 'Chấp nhận',
          2 => 'Hủy'
      ],
+
+     'item_list' => [
+         0 => 'Nhập đầu cuối',
+         1 => 'Nhập từng mã'
+     ],
  ];

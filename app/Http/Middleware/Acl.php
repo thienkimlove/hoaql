@@ -27,8 +27,13 @@ class Acl
 
             $routeName = $request->route()->getName();
             $permissions = Permission::getKeyRoute($routeName);
-            if ($permissions && !$user->hasAccess($permissions)) {
-                flash()->error('Lỗi', 'Không có quyền truy cập mục này!');
+
+            if ($permissions == 'orders' || $permissions == 'transports') {
+                $permissions = ['transports', 'orders'];
+            }
+
+            if ($permissions && !$user->hasAnyAccess($permissions)) {
+                flash()->error('Lỗi', 'Không có quyền truy cập mục này!'.$permissions);
                 return redirect()->route('notice');
             }
         }

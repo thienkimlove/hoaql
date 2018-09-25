@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Lib\Helpers;
 use App\Models\Event;
 use App\Models\Order;
+use App\Models\Product;
+use DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Validator;
@@ -19,6 +21,8 @@ class OrdersController extends Controller
         'quantity' => 'required',
         'price' => 'required',
         ];
+
+
     public $messages = [
         'customer_id.required' => 'Xin chọn đại lý',
         'customer_name.required' => 'Xin chọn đại lý',
@@ -55,6 +59,9 @@ class OrdersController extends Controller
         'vc_name',
         'vc_phone',
         'vc_code',
+        'holo_term_qty',
+        'small_bag_qty',
+        'carton_box_qty',
     ];
 
     public $num_fields = [
@@ -69,6 +76,9 @@ class OrdersController extends Controller
         'phi_vc_thu_ho',
         'phi_vc_cty_tra',
         'tien_phai_thu',
+        'holo_term_qty',
+        'small_bag_qty',
+        'carton_box_qty',
     ];
 
 
@@ -94,10 +104,24 @@ class OrdersController extends Controller
     {
         $order = Order::find($id);
 
-        if ($order->canDelivery()) {
+        if ($order->canEditTransportInfo() && $order->vc_user_id && $order->vc_name) {
             $order->status = 'delivery';
             $order->save();
             flash()->success('Thành công!', 'Đơn đã chuyển');
+        } else {
+            flash()->error('Thất bại!', 'Trạng thái đơn hiện tại là :'.config('system.order_status.'.$order->status));
+        }
+        return redirect()->back();
+    }
+
+    public function move($id)
+    {
+        $order = Order::find($id);
+
+        if ($order->canEditSaleInfo()) {
+            $order->status = 'package';
+            $order->save();
+            flash()->success('Thành công!', 'Đơn đã chuyển sang vận chuyển');
         } else {
             flash()->error('Thất bại!', 'Trạng thái đơn hiện tại là :'.config('system.order_status.'.$order->status));
         }
@@ -109,9 +133,19 @@ class OrdersController extends Controller
         $order = Order::find($id);
 
         if ($order->canCancel()) {
-            $order->status = 'cancel';
-            $order->save();
-            flash()->success('Thành công!', 'Đơn đã hủy');
+            DB::beginTransaction();
+            try {
+                $order->status = 'cancel';
+                $order->save();
+                $order->products()->delete();
+                $order->details()->delete();
+                DB::commit();
+                flash()->success('Thành công!', 'Đơn đã hủy');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                flash()->error('Thất bại!', 'Lỗi xử lý :'.$e->getMessage());
+            }
+
         } else {
             flash()->error('Thất bại!', 'Trạng thái đơn hiện tại là :'.config('system.order_status.'.$order->status));
         }
@@ -123,9 +157,18 @@ class OrdersController extends Controller
         $order = Order::find($id);
 
         if ($order->canReturn()) {
-            $order->status = 'return';
-            $order->save();
-            flash()->success('Thành công!', 'Đơn đã hoàn');
+            DB::beginTransaction();
+            try {
+                $order->status = 'return';
+                $order->save();
+                $order->products()->delete();
+                $order->details()->delete();
+                DB::commit();
+                flash()->success('Thành công!', 'Đơn đã hoàn');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                flash()->error('Thất bại!', 'Lỗi xử lý :'.$e->getMessage());
+            }
         } else {
             flash()->error('Thất bại!', 'Trạng thái đơn hiện tại là :'.config('system.order_status.'.$order->status));
         }
@@ -157,9 +200,12 @@ class OrdersController extends Controller
         $data['sale_user_id'] = $user->id;
         $validator = Validator::make($data, $this->rules, $this->messages);
 
-        $validator->after(function ($validator) use($data) {
+        $validator->after(function ($validator) use($data, $user) {
             if (($data['box_qty'] + $data['bag_qty'])!= $data['quantity']) {
                 $validator->errors()->add('quantity', 'Tổng số túi và hộp không bằng số lượng tổng!');
+            }
+            if (!$user->hasAccess('orders')) {
+                $validator->errors()->add('quantity', 'Thành viên không có quyền tạo đơn hàng!');
             }
         });
 
@@ -198,44 +244,26 @@ class OrdersController extends Controller
         return view('orders.edit', compact('order'));
     }
 
-    public function update(Request $request, $id)
+    public function sale_update(Request $request, $id)
     {
         //$request->save($id);
         $order = Order::findOrFail($id);
         $dataRequest = $request->all();
         $user = \Sentinel::getUser();
         $data = [];
-        if ($order->canEditSaleInfo() && $user->hasAccess('orders')) {
-            foreach ($this->sale_fields as $sale_field) {
-                if (isset($dataRequest[$sale_field])) {
-                    $data[$sale_field] = (in_array($sale_field, $this->num_fields))? Helpers::convertStringToInt($dataRequest[$sale_field]) : $dataRequest[$sale_field];
-                }
-            }
-        }
-
-
-        if ($order->canEditTransportInfo() && $user->hasAccess('transports')) {
-            $isUpdateTransport = false;
-            foreach ($this->vc_fields as $vc_field) {
-                if (isset($dataRequest[$vc_field])) {
-                    $data[$vc_field] = (in_array($vc_field, $this->num_fields))? Helpers::convertStringToInt($dataRequest[$vc_field]) : $dataRequest[$vc_field];
-                    $isUpdateTransport = true;
-                }
-            }
-            if (($order->isCreate()) && $isUpdateTransport) {
-                $data['status'] = 'package';
-                $data['vc_user_id'] = $user->id;
+        foreach ($this->sale_fields as $sale_field) {
+            if (isset($dataRequest[$sale_field])) {
+                $data[$sale_field] = (in_array($sale_field, $this->num_fields))? Helpers::convertStringToInt($dataRequest[$sale_field]) : $dataRequest[$sale_field];
             }
         }
 
         $validator = Validator::make($data, $this->rules, $this->messages);
-        if ($order->canEditSaleInfo() && $user->hasAccess('orders')) {
-            $validator->after(function ($validator) use($data) {
-                if (($data['box_qty'] + $data['bag_qty'])!= $data['quantity']) {
-                    $validator->errors()->add('quantity', 'Tổng số túi và hộp không bằng số lượng tổng!');
-                }
-            });
-        }
+
+        $validator->after(function ($validator) use($data) {
+            if (($data['box_qty'] + $data['bag_qty'])!= $data['quantity']) {
+                $validator->errors()->add('quantity', 'Tổng số túi và hộp không bằng số lượng tổng!');
+            }
+        });
 
         if ($validator->fails()) {
             return redirect()
@@ -256,7 +284,42 @@ class OrdersController extends Controller
             'content_id' => $order->id
         ]);
 
-        flash()->success('Thành công!', 'Cập nhật phương thức thành công!');
+        flash()->success('Thành công!', 'Cập nhật thông tin đơn thành công!');
+
+        return redirect()->route('orders.index');
+    }
+
+
+    public function vc_update(Request $request, $id)
+    {
+
+        $order = Order::findOrFail($id);
+        $dataRequest = $request->all();
+        $user = \Sentinel::getUser();
+        $data = [];
+
+        foreach ($this->vc_fields as $vc_field) {
+            if (isset($dataRequest[$vc_field])) {
+                $data[$vc_field] = (in_array($vc_field, $this->num_fields)) ? Helpers::convertStringToInt($dataRequest[$vc_field]) : $dataRequest[$vc_field];
+            }
+            if (!$order->vc_user_id) {
+                $data['vc_user_id'] = $user->id;
+            }
+        }
+
+        $before = json_encode($order->toArray(), true);
+        $order->update($data);
+
+        Event::create([
+            'content' => 'orders',
+            'action' => 'edit',
+            'user_id' => $user->id,
+            'before' => $before,
+            'after' => json_encode($data, true),
+            'content_id' => $order->id
+        ]);
+
+        flash()->success('Thành công!', 'Cập nhật vận chuyển thành công!');
 
         return redirect()->route('orders.index');
     }

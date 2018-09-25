@@ -16,7 +16,7 @@
                     <i class="md md-input text-success"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">0</b></h3>
+                    <h3 class="text-dark"><b class="counter">{{ $totalOrders }}</b></h3>
                     <p class="text-muted">Số lượng đơn hàng</p>
                 </div>
                 <div class="clearfix"></div>
@@ -29,7 +29,7 @@
                     <i class="md md-import-export text-pink"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">0</b></h3>
+                    <h3 class="text-dark"><b class="counter">{{ $totalCustomers }}</b></h3>
                     <p class="text-muted">Số lượng đại lý</p>
                 </div>
                 <div class="clearfix"></div>
@@ -42,8 +42,8 @@
                     <i class="md md-store text-purple"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">0</b></h3>
-                    <p class="text-muted">Số lượng giao vận</p>
+                    <h3 class="text-dark"><b class="counter">{{ $totalRules }}</b></h3>
+                    <p class="text-muted">Số lượng cơ chế</p>
                 </div>
                 <div class="clearfix"></div>
             </div>
@@ -55,7 +55,7 @@
                     <i class="md md-account-child text-info"></i>
                 </div>
                 <div class="text-right">
-                    <h3 class="text-dark"><b class="counter">{{ \App\Models\User::count() }}</b></h3>
+                    <h3 class="text-dark"><b class="counter">{{ $totalUsers }}</b></h3>
                     <p class="text-muted">Số lượng người dùng</p>
                 </div>
                 <div class="clearfix"></div>

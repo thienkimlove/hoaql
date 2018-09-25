@@ -25,14 +25,14 @@ Route::group(['middleware' => 'acl'], function() {
     Route::get('users.dataTables', ['uses' => 'UsersController@dataTables', 'as' => 'users.dataTables']);
     Route::resource('users', 'UsersController');
 
-    Route::get('users/{id}/permissions', ['uses' => 'UserPermissionsController@index', 'as' => 'userPermissions.index']);
-    Route::put('users/{id}/permissions', ['uses' => 'UserPermissionsController@update', 'as' => 'userPermissions.update']);
+    //Route::get('users/{id}/permissions', ['uses' => 'UserPermissionsController@index', 'as' => 'userPermissions.index']);
+    //Route::put('users/{id}/permissions', ['uses' => 'UserPermissionsController@update', 'as' => 'userPermissions.update']);
 
     Route::get('roles/dataTables', ['uses' => 'RolesController@dataTables', 'as' => 'roles.dataTables']);
     Route::resource('roles', 'RolesController');
     Route::get('roles/{id}/permissions', ['uses' => 'RolePermissionsController@index', 'as' => 'rolePermissions.index']);
     Route::put('roles/{id}/permissions', ['uses' => 'RolePermissionsController@update', 'as' => 'rolePermissions.update']);
-    Route::resource('permissions', 'PermissionsController', ['only' => ['index']]);
+    //Route::resource('permissions', 'PermissionsController', ['only' => ['index']]);
 
 
     Route::post('modules.add', ['uses' => 'ModulesController@add', 'as' => 'modules.add']);
@@ -63,9 +63,23 @@ Route::group(['middleware' => 'acl'], function() {
 
     Route::get('orders.cancel/{id}', ['uses' => 'OrdersController@cancel', 'as' => 'orders.cancel']);
 
+    Route::get('orders.move/{id}', ['uses' => 'OrdersController@move', 'as' => 'orders.move']);
+
     Route::get('orders/export', 'OrdersController@export')->name('orders.export');
 
+    Route::put('orders/sale_update/{order}', 'OrdersController@sale_update')->name('orders.sale_update');
+
+    Route::put('orders/vc_update/{order}', 'OrdersController@vc_update')->name('orders.vc_update');
+
     Route::resource('orders', 'OrdersController');
+
+    Route::get('details/delete/{id}', 'DetailsController@delete')->name('details.delete');
+
+
+
+    Route::get('details.dataTables', ['uses' => 'DetailsController@dataTables', 'as' => 'details.dataTables']);
+
+    Route::resource('details', 'DetailsController');
 
 });
 

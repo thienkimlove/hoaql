@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Lib\Helpers;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Rule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Log;
 use Sentinel;
@@ -69,7 +71,13 @@ class BasicController extends Controller
 
     public function index()
     {
-        return view('index');
+        $totalOrders = Order::count();
+        $totalUsers = User::count();
+        $totalCustomers = Customer::count();
+        $totalRules = Rule::count();
+
+
+        return view('index', compact('totalOrders', 'totalUsers', 'totalCustomers', 'totalRules'));
     }
 
     /**

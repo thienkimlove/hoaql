@@ -15,7 +15,7 @@ class OrderObserver
      */
     public function created(Order $order)
     {
-        $order->code = 'DL-'.$order->id;
+        $order->code = 'DL'.(100+$order->id);
         //$customer->slug = str_slug($customer->name);
         $order->save();
     }
