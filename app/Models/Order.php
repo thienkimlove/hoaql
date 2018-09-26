@@ -175,6 +175,13 @@ class Order extends Model
                     });
                 }
 
+                if ($request->filled('product_code')) {
+                    $product_code = $request->get('product_code');
+                    $query->whereHas('products', function($q) use ($product_code){
+                        $q->where('code', $product_code);
+                    });
+                }
+
             })
             ->addColumn('action', function ($content) use ($user) {
 
@@ -297,6 +304,13 @@ class Order extends Model
             });
         }
 
+        if ($request->filled('filter_product_code')) {
+            $filter_product_code = $request->get('filter_product_code');
+            $query->whereHas('products', function($q) use ($filter_product_code){
+                $q->where('code', $filter_product_code);
+            });
+        }
+
         $reports = $query->get();
 
         return (new static())->createExcelFile($reports);
@@ -310,35 +324,39 @@ class Order extends Model
         $row = 2;
         foreach ($reports as $report) {
 
-            $tructhuoc = isset($report->customer->parent)? ' - Trực thuộc : '.$report->customer->parent->name : '';
+            $tructhuoc = isset($report->customer->parent)? $report->customer->parent->name : '';
 
             $objPHPExcel->getActiveSheet()->setCellValue('A'.$row, $row - 1)
                 ->setCellValue('B'.$row, $report->created_at->format('d/m/Y'))
                 ->setCellValue('C'.$row, $report->code)
-                ->setCellValue('D'.$row, $report->customer_name.' (Mã : '.$report->customer->code.') - '.$report->customer_phone.' - '.$report->customer_address. $tructhuoc)
-                ->setCellValue('E'.$row, number_format($report->quantity))
+                ->setCellValue('D'.$row, $report->customer_name.' (Mã : '.$report->customer->code.')')
+                ->setCellValue('E'.$row, $report->customer_phone)
+                ->setCellValue('F'.$row, $report->customer_address)
+                ->setCellValue('G'.$row, $tructhuoc)
+                ->setCellValue('H'.$row, number_format($report->quantity))
 
-                ->setCellValue('F'.$row, number_format($report->box_qty))
-                ->setCellValue('G'.$row, number_format($report->bag_qty))
-                ->setCellValue('H'.$row, number_format($report->small_bag_qty))
+                ->setCellValue('I'.$row, number_format($report->box_qty))
+                ->setCellValue('J'.$row, number_format($report->bag_qty))
+                ->setCellValue('K'.$row, number_format($report->small_bag_qty))
 
-                ->setCellValue('I'.$row, number_format($report->carton_box_qty))
-                ->setCellValue('J'.$row, number_format($report->holo_term_qty))
-                ->setCellValue('K'.$row, number_format($report->gift))
+                ->setCellValue('L'.$row, number_format($report->carton_box_qty))
+                ->setCellValue('M'.$row, number_format($report->holo_term_qty))
+                ->setCellValue('N'.$row, number_format($report->gift))
 
-                ->setCellValue('L'.$row, number_format($report->price))
-                ->setCellValue('M'.$row, number_format($report->total))
-                ->setCellValue('N'.$row, $report->sale_user->name)
+                ->setCellValue('O'.$row, number_format($report->price))
+                ->setCellValue('P'.$row, number_format($report->total))
+                ->setCellValue('Q'.$row, $report->sale_user->name)
 
-                ->setCellValue('O'.$row, number_format($report->phi_vc_thu_ho))
-                ->setCellValue('P'.$row, number_format($report->phi_vc_cty_tra))
-                ->setCellValue('Q'.$row, number_format($report->tien_phai_thu))
+                ->setCellValue('R'.$row, number_format($report->phi_vc_thu_ho))
+                ->setCellValue('S'.$row, number_format($report->phi_vc_cty_tra))
+                ->setCellValue('T'.$row, number_format($report->tien_phai_thu))
 
-                ->setCellValue('R'.$row, number_format($report->salary))
-                ->setCellValue('S'.$row, number_format($report->award))
-                ->setCellValue('T'.$row, $report->vc_name.' | '.$report->vc_phone.' | '.$report->vc_code)
-                ->setCellValue('U'.$row, isset($report->vc_user)? $report->vc_user->name : '')
-                ->setCellValue('V'.$row, config('system.order_status.'.$report->status));
+                ->setCellValue('U'.$row, number_format($report->salary))
+                ->setCellValue('V'.$row, number_format($report->award))
+                ->setCellValue('W'.$row, $report->vc_name)
+                ->setCellValue('X'.$row, $report->vc_code)
+                ->setCellValue('Y'.$row, isset($report->vc_user)? $report->vc_user->name : '')
+                ->setCellValue('Z'.$row, config('system.order_status.'.$report->status));
 
             $row++;
         }

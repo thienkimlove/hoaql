@@ -62,6 +62,11 @@
                             </div>
 
                             <div class="form-group m-l-10">
+                                <label class="sr-only" for="">Mã Sản phẩm</label>
+                                <input id="product_code" type="text" class="form-control" placeholder="Mã Sản phẩm AXXXXXXX" name="product_code" maxlength="9" minlength="9"/>
+                            </div>
+
+                            <div class="form-group m-l-10">
                                 <label class="sr-only" for="">Trạng thái</label>
                                 {!! Form::select('status', ['' => '--- Chọn trạng thái ---'] + config('system.order_status'), '', ['class' => 'form-control']) !!}
                             </div>
@@ -97,6 +102,7 @@
                             {{Form::hidden('filter_customer_code', null)}}
                             {{Form::hidden('filter_vc_code', null)}}
                             {{Form::hidden('filter_vc_name', null)}}
+                            {{Form::hidden('filter_product_code', null)}}
 
                             <button class="btn btn-danger waves-effect waves-light m-t-15" value="export" type="submit" name="export">
                                 <i class="fa fa-download"></i>&nbsp; Xuất Excel
@@ -162,6 +168,13 @@
 
     <script src="/vendor/ubold/assets/plugins/moment/moment.js"></script>
     <script src="/vendor/ubold/assets/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+
+    <script src="/vendor/Inputmask/dist/inputmask/inputmask.js"></script>
+    <script src="/vendor/Inputmask/dist/inputmask/inputmask.extensions.js"></script>
+    <script src="/vendor/Inputmask/dist/inputmask/inputmask.numeric.extensions.js"></script>
+    <script src="/vendor/Inputmask/dist/inputmask/inputmask.date.extensions.js"></script>
+    <script src="/vendor/Inputmask/dist/inputmask/jquery.inputmask.js"></script>
+    <script src="/vendor/Inputmask/dist/inputmask/bindings/inputmask.binding.js"></script>
 @endsection
 
 @section('inline_scripts')
@@ -170,6 +183,8 @@
 
         $(function () {
             $('.select2').select2();
+
+            $('#product_code').inputmask({ 'regex' : 'A\\d{8}'}); //mask with dynamic syntax
 
             let dataTable = $("#dataTables-contents").DataTable({
                 searching: false,
@@ -184,6 +199,7 @@
                         d.vc_name = $('input[name=vc_name]').val();
                         d.vc_code = $('input[name=vc_code]').val();
                         d.status = $('select[name=status]').val();
+                        d.product_code = $('input[name=product_code]').val();
                     }
                 },
                 columns: [
@@ -396,6 +412,7 @@
                 $('input[name=filter_vc_name]').val($('input[name=vc_name]').val());
 
                 $('input[name=filter_status]').val($('select[name=status]').val());
+                $('input[name=filter_product_code]').val($('input[name=product_code]').val());
 
 
                 $(this).submit();
